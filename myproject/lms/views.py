@@ -6,7 +6,8 @@ from .serializers import CourseSerializer, LessonSerializer
 
 # CRUD для Course с использованием ViewSet
 class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
+    """ViewSet для курсов"""
+    queryset = Course.objects.prefetch_related('lessons').all()
     serializer_class = CourseSerializer
 
 

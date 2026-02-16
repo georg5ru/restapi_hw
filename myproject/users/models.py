@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from lms.models import Course, Lesson  # Импортируем модели из lms
 
 
 class UserManager(BaseUserManager):
@@ -37,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'  # Используем email для авторизации
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     class Meta:
@@ -46,3 +47,56 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class Payment(models.Model):
+    """Модель платежей"""
+
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Наличные'),
+        ('bank_transfer', 'Перевод на счет'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name='Пользователь'
+    )
+    payment_date = models.DateTimeField('Дата оплаты', default=timezone.now)
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='payments',
+        verbose_name='Оплаченный курс'
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='payments',
+        verbose_name='Оплаченный урок'
+    )
+    amount = models.DecimalField('Сумма оплаты', max_digits=10, decimal_places=2)
+    payment_method = models.CharField(
+        'Способ оплаты',
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES
+    )
+
+    class Meta:
+        verbose_name = 'Платеж'
+        verbose_name_plural = 'Платежи'
+        ordering = ['-payment_date']
+
+    def __str__(self):
+        return f"Платеж от {self.user.email} на сумму {self.amount}"
+
+    def clean(self):
+        """Проверка что заполнен либо курс, либо урок"""
+        from django.core.exceptions import ValidationError
+        if not self.course and not self.lesson:
+            raise ValidationError('Должен быть указан либо курс, либо урок')
