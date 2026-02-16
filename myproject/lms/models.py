@@ -1,9 +1,15 @@
 from django.db import models
+from django.conf import settings
 
 
 class Course(models.Model):
     """Модель курса"""
-
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='courses',
+        verbose_name='Владелец'
+    )
     title = models.CharField('Название', max_length=200)
     preview = models.ImageField('Превью', upload_to='courses/')
     description = models.TextField('Описание')
@@ -21,7 +27,12 @@ class Course(models.Model):
 
 class Lesson(models.Model):
     """Модель урока. Связан с курсом (один ко многим)"""
-
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='lessons',
+        verbose_name='Владелец'
+    )
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
