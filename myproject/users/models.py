@@ -39,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'  # Используем email для авторизации
     REQUIRED_FIELDS = []
+    username = None
 
     class Meta:
         verbose_name = 'Пользователь'
