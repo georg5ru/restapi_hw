@@ -17,7 +17,7 @@ class LessonListView(generics.ListAPIView):
     serializer_class = LessonSerializer
 
 
-class LessonDetailView(generics.RetrieveUpdateDestroyAPIView):
+class LessonRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     """Получение, обновление и удаление одного урока"""
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
