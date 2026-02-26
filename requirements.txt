@@ -1,7 +1,10 @@
-Django>=5.0
-djangorestframework>=3.14
-djangorestframework-simplejwt>=5.3.1
-django-filter>=23.5
-Pillow>=10.0
-psycopg2-binary>=2.9.9
-python-decouple>=3.8
+djangorestframework-simplejwt
+asgiref==3.11.1
+Django==6.0.2
+django-filter==25.2
+djangorestframework==3.16.1
+pillow==12.1.1
+psycopg2-binary==2.9.11
+sqlparse==0.5.5
+tzdata==2025.3
+coverage==7.13.4
