@@ -3,7 +3,6 @@ from django.conf import settings
 
 
 class Course(models.Model):
-    """Модель курса"""
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -26,7 +25,6 @@ class Course(models.Model):
 
 
 class Lesson(models.Model):
-    """Модель урока. Связан с курсом (один ко многим)"""
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

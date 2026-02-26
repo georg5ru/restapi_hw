@@ -1,8 +1,8 @@
-from rest_framework import viewsets, generics, permissions
+from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Course, Lesson
 from .serializers import CourseSerializer, LessonSerializer
-from .permissions import ModeratorCanViewAndEditOnly, IsModeratorOrOwner
+from lms.permissions import IsModerator, IsOwner
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -13,14 +13,14 @@ class CourseViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Разные права для разных действий"""
         if self.action == 'create':
-            # Создание: только авторизованные (не модераторы)
-            permission_classes = [IsAuthenticated]
+            # Создание: только авторизованные (НЕ модераторы)
+            permission_classes = [IsAuthenticated, ~IsModerator]
         elif self.action in ['update', 'partial_update']:
-            # Обновление: модераторы или владельцы
-            permission_classes = [IsAuthenticated, IsModeratorOrOwner]
+            # Обновление: модераторы ИЛИ владельцы
+            permission_classes = [IsAuthenticated, IsModerator | IsOwner]
         elif self.action == 'destroy':
-            # Удаление: только владельцы (не модераторы)
-            permission_classes = [IsAuthenticated]
+            # Удаление: только владельцы (НЕ модераторы)
+            permission_classes = [IsAuthenticated, IsOwner]
         else:
             # Просмотр списка и деталей: все авторизованные
             permission_classes = [IsAuthenticated]
@@ -56,11 +56,23 @@ class LessonListView(generics.ListAPIView):
         return Lesson.objects.filter(owner=user).select_related('course').all()
 
 
-class LessonDetailView(generics.RetrieveUpdateDestroyAPIView):
+class LessonRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     """Получение, обновление и удаление одного урока"""
     serializer_class = LessonSerializer
-    permission_classes = [IsAuthenticated, IsModeratorOrOwner]
     lookup_field = 'pk'
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update']:
+            # Обновление: модераторы ИЛИ владельцы
+            permission_classes = [IsAuthenticated, IsModerator | IsOwner]
+        elif self.action == 'destroy':
+            # Удаление: только владельцы (НЕ модераторы)
+            permission_classes = [IsAuthenticated, IsOwner]
+        else:
+            # Чтение: все авторизованные
+            permission_classes = [IsAuthenticated]
+
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         user = self.request.user
@@ -75,7 +87,7 @@ class LessonCreateView(generics.CreateAPIView):
     """Создание нового урока"""
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, ~IsModerator]  # НЕ модераторы
 
     def perform_create(self, serializer):
         """Привязываем урок к создавшему его пользователю"""

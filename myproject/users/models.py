@@ -1,12 +1,9 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-from lms.models import Course, Lesson  # Импортируем модели из lms
 
 
 class UserManager(BaseUserManager):
-    """Менеджер для кастомной модели пользователя"""
-
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Email обязателен')
@@ -23,8 +20,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Кастомная модель пользователя с авторизацией по email"""
-
     email = models.EmailField('email', unique=True)
     first_name = models.CharField('Имя', max_length=30, blank=True)
     last_name = models.CharField('Фамилия', max_length=30, blank=True)
@@ -50,8 +45,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Payment(models.Model):
-    """Модель платежей"""
-
     PAYMENT_METHOD_CHOICES = [
         ('cash', 'Наличные'),
         ('bank_transfer', 'Перевод на счет'),
@@ -65,7 +58,7 @@ class Payment(models.Model):
     )
     payment_date = models.DateTimeField('Дата оплаты', default=timezone.now)
     course = models.ForeignKey(
-        Course,
+        'lms.Course',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -73,7 +66,7 @@ class Payment(models.Model):
         verbose_name='Оплаченный курс'
     )
     lesson = models.ForeignKey(
-        Lesson,
+        'lms.Lesson',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -94,9 +87,3 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Платеж от {self.user.email} на сумму {self.amount}"
-
-    def clean(self):
-        """Проверка что заполнен либо курс, либо урок"""
-        from django.core.exceptions import ValidationError
-        if not self.course and not self.lesson:
-            raise ValidationError('Должен быть указан либо курс, либо урок')

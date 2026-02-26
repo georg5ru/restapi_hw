@@ -8,44 +8,31 @@ class IsModerator(permissions.BasePermission):
         return request.user.groups.filter(name='moderators').exists()
 
 
-class ModeratorCanViewAndEditOnly(permissions.BasePermission):
-    """
-    Модератор может просматривать и редактировать,
-    но не может создавать и удалять
-    """
+class IsOwner(permissions.BasePermission):
+    """Проверка на владельца объекта"""
 
-    def has_permission(self, request, view):
-        # Проверяем, является ли пользователь модератором
-        is_moderator = request.user.groups.filter(name='moderators').exists()
-
-        if not is_moderator:
-            return False
-
-        # Модератор может только читать и обновлять
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        if request.method == 'PUT' or request.method == 'PATCH':
-            return True
-
-        # Создание и удаление запрещено
+    def has_object_permission(self, request, view, obj):
+        if hasattr(obj, 'owner'):
+            return obj.owner == request.user
         return False
 
 
 class IsModeratorOrOwner(permissions.BasePermission):
-    """Модератор или владелец объекта"""
+    """
+    Модератор ИЛИ владелец.
+    Модератор может только читать и редактировать (но не создавать/удалять).
+    Владелец может всё.
+    """
 
     def has_object_permission(self, request, view, obj):
-        # Проверка на модератора
-        if request.user.groups.filter(name='moderators').exists():
-            # Модератор может читать и редактировать, но не удалять и не создавать
-            if request.method in permissions.SAFE_METHODS:
-                return True
-            if request.method in ['PUT', 'PATCH']:
-                return True
-            return False
+        is_moderator = request.user.groups.filter(name='moderators').exists()
 
-        # Проверка на владельца
+        # Модератор может только читать и редактировать
+        if is_moderator:
+            return request.method in permissions.SAFE_METHODS or \
+                request.method in ['PUT', 'PATCH']
+
+        # Владелец может всё
         if hasattr(obj, 'owner'):
             return obj.owner == request.user
 
