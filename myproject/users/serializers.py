@@ -53,3 +53,26 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'user_email', 'payment_date', 'course', 'course_title', 'lesson', 'lesson_title',
                   'amount', 'payment_method']
         read_only_fields = ['user']
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    is_valid = serializers.BooleanField(read_only=True)
+    days_remaining = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = ['id', 'user', 'start_date', 'end_date', 'is_active', 'is_valid', 'days_remaining', 'created_at']
+        read_only_fields = ['user', 'start_date', 'is_valid', 'days_remaining']
+
+    def get_days_remaining(self, obj):
+        if not obj.is_valid():
+            return 0
+        delta = obj.end_date - timezone.now()
+        return max(0, delta.days)
+
+    def create(self, validated_data):
+        # Проверка на наличие активной подписки
+        user = validated_data.get('user')
+        if Subscription.objects.filter(user=user, is_active=True, end_date__gt=timezone.now()).exists():
+            raise serializers.ValidationError("У пользователя уже есть активная подписка")
+        return super().create(validated_data)
