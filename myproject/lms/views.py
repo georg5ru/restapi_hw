@@ -1,9 +1,11 @@
-from rest_framework import viewsets, generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Course, Lesson
-from .serializers import CourseSerializer, LessonSerializer
-from lms.permissions import IsModerator, IsOwner
-
+from rest_framework import viewsets
+from .models import Course
+from .serializers import CourseSerializer
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .models import Lesson
+from .serializers import LessonSerializer
+from .permissions import IsModerator, IsOwner
 
 class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet для курсов с правами доступа"""
@@ -62,14 +64,17 @@ class LessonRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'pk'
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update']:
-            # Обновление: модераторы ИЛИ владельцы
+        """
+        В Generic views нет self.action, поэтому проверяем метод запроса
+        """
+        if self.request.method in ('PUT', 'PATCH'):
+            # Update - модератор ИЛИ владелец
             permission_classes = [IsAuthenticated, IsModerator | IsOwner]
-        elif self.action == 'destroy':
-            # Удаление: только владельцы (НЕ модераторы)
+        elif self.request.method == 'DELETE':
+            # Destroy - только владелец (НЕ модератор)
             permission_classes = [IsAuthenticated, IsOwner]
         else:
-            # Чтение: все авторизованные
+            # Retrieve (GET, HEAD, OPTIONS) - любой аутентифицированный
             permission_classes = [IsAuthenticated]
 
         return [permission() for permission in permission_classes]
