@@ -29,7 +29,7 @@ class Course(models.Model):
         verbose_name = 'Курс'
         verbose_name_plural = 'Курсы'
 
-    def __str__(self):
+    def str(self):
         return self.title
 
 
@@ -61,7 +61,7 @@ class Lesson(models.Model):
         verbose_name = 'Урок'
         verbose_name_plural = 'Уроки'
 
-    def __str__(self):
+    def str(self):
         return self.title
 
 
@@ -88,5 +88,5 @@ class Subscription(models.Model):
         verbose_name_plural = 'Подписки'
         unique_together = ('user', 'course')
 
-    def __str__(self):
+    def str(self):
         return f"{self.user.email} - {self.course.title}"
